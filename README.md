@@ -1,103 +1,50 @@
-# hydroxide
+# hydroxide-push
+### *Forked from [Hydroxide](https://github.com/emersion/hydroxide)*
 
-A third-party, open-source ProtonMail bridge. For power users only, designed to
-run on a server.
+## Push notifications for Proton Mail mobile via a UP provider
 
-hydroxide supports CardDAV, IMAP and SMTP.
-
-Rationale:
-
-* No GUI, only a CLI (so it runs in headless environments)
-* Standard-compliant (we don't care about Microsoft Outlook)
-* Fully open-source
-
-Feel free to join the IRC channel: #emersion on Libera Chat.
-
-## How does it work?
-
-hydroxide is a server that translates standard protocols (SMTP, IMAP, CardDAV)
-into ProtonMail API requests. It allows you to use your preferred e-mail clients
-and `git-send-email` with ProtonMail.
-
-    +-----------------+             +-------------+  ProtonMail  +--------------+
-    |                 | IMAP, SMTP  |             |     API      |              |
-    |  E-mail client  <------------->  hydroxide  <-------------->  ProtonMail  |
-    |                 |             |             |              |              |
-    +-----------------+             +-------------+              +--------------+
+Protonmail depends on Google services to deliver push notifications,
+This is a stripped down version of [Hydroxide](https://github.com/emersion/hydroxide)
+to get notified of new mail. See original repo for details on operation.
 
 ## Setup
 
-### Go
+Download (soon), build the binary or the container image or pull the container image yourself.
+Simplest way is to run the container image.
 
-hydroxide is implemented in Go. Head to [Go website](https://golang.org) for
-setup information.
+Login and push gateway details are saved under `$HOME/.config/hydroxide`. The container
+image saves configuration under `/data`, so mount a named volume or host directory there.
+The examples below use a named volume.
 
-### Installing
+If using Docker, substitute `podman` with `docker` in the examples. 
 
-Start by installing hydroxide:
-
+Binary:
 ```shell
-git clone https://github.com/emersion/hydroxide.git
-go build ./cmd/hydroxide
+./hydroxide-push auth your.proton@email.address
 ```
-
-Then you'll need to login to ProtonMail via hydroxide, so that hydroxide can
-retrieve e-mails from ProtonMail. You can do so with this command:
-
+Container:
 ```shell
-hydroxide auth <username>
+podman run -it --rm -v hydroxide-config:/data ghcr.io/0ranki/hydroxide-push auth your.proton@email.address
 ```
+You will be prompted for the Proton account credentials and the details for the push server. Proton credentials are stored encrypted form.
 
-Once you're logged in, a "bridge password" will be printed. Don't close your
-terminal yet, as this password is not stored anywhere by hydroxide and will be
-needed when configuring your e-mail client.
+The auth flow generates a separate password for the bridge, which is stored in plaintext
+to `$HOME/.config/notify.json`. Unlike upstream `hydroxide`, there is no service listening on any port,
+all communications is internal to the program.
 
-Your ProtonMail credentials are stored on disk encrypted with this bridge
-password (a 32-byte random password generated when logging in).
-
-## Usage
-
-hydroxide can be used in multiple modes.
-
-> Don't start hydroxide multiple times, instead you can use `hydroxide serve`.
-> This requires ports 1025 (smtp), 1143 (imap), and 8080 (carddav).
-
-### SMTP
-
-To run hydroxide as an SMTP server:
-
+### Reconfigure push server
+Binary:
 ```shell
-hydroxide smtp
+hydroxide-push setup-ntfy
 ```
-
-Once the bridge is started, you can configure your e-mail client with the
-following settings:
-
-* Hostname: `localhost`
-* Port: 1025
-* Security: none
-* Username: your ProtonMail username
-* Password: the bridge password (not your ProtonMail password)
-
-### CardDAV
-
-You must setup an HTTPS reverse proxy to forward requests to `hydroxide`.
-
+Container:
 ```shell
-hydroxide carddav
+podman run -it --rm -v hydroxide-config:/data ghcr.io/0ranki/hydroxide-push setup-ntfy
 ```
+You'll be asked for the base URL of the push server, and the topic. These will probably
+be combined to a single string in future versions.
 
-Tested on GNOME (Evolution) and Android (DAVDroid).
-
-### IMAP
-
-⚠️  **Warning**: IMAP support is work-in-progress. Here be dragons.
-
-For now, it only supports unencrypted local connections.
-
-```shell
-hydroxide imap
-```
+**NOTE:** Authentication for the push endpoint is not yet supported.
 
 ## License
 
