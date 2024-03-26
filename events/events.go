@@ -8,7 +8,7 @@ import (
 	"github.com/emersion/hydroxide/protonmail"
 )
 
-const pollInterval = 30 * time.Second
+const pollInterval = 10 * time.Second
 
 type Receiver struct {
 	c *protonmail.Client

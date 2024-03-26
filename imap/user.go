@@ -1,6 +1,7 @@
 package imap
 
 import (
+	"github.com/emersion/hydroxide/ntfy"
 	"log"
 	"strings"
 	"sync"
@@ -347,75 +348,77 @@ func (u *user) receiveEvents(updates chan<- imapbackend.Update, events <-chan *p
 							eventUpdates = append(eventUpdates, update)
 						}
 					}
+					// Send push notification to topic
+					go ntfy.Notify()
 				case protonmail.EventUpdate, protonmail.EventUpdateFlags:
 					log.Println("Received update event for message", eventMessage.ID)
-					createdSeqNums, deletedSeqNums, err := u.db.UpdateMessage(eventMessage.ID, eventMessage.Updated)
-					if err != nil {
-						log.Printf("cannot handle update event for message %s: cannot update message in local DB: %v", eventMessage.ID, err)
-						break
-					}
-
-					for labelID, seqNum := range createdSeqNums {
-						if mbox := u.getMailboxByLabel(labelID); mbox != nil {
-							update := new(imapbackend.MailboxUpdate)
-							update.Update = imapbackend.NewUpdate(u.u.Name, mbox.name)
-							update.MailboxStatus = imap.NewMailboxStatus(mbox.name, []imap.StatusItem{imap.StatusMessages})
-							update.MailboxStatus.Messages = seqNum
-							eventUpdates = append(eventUpdates, update)
-						}
-					}
-					for labelID, seqNum := range deletedSeqNums {
-						if mbox := u.getMailboxByLabel(labelID); mbox != nil {
-							update := new(imapbackend.ExpungeUpdate)
-							update.Update = imapbackend.NewUpdate(u.u.Name, mbox.name)
-							update.SeqNum = seqNum
-							eventUpdates = append(eventUpdates, update)
-						}
-					}
-
-					// Send message updates
-					msg, err := u.db.Message(eventMessage.ID)
-					if err != nil {
-						log.Printf("cannot handle update event for message %s: cannot get updated message from local DB: %v", eventMessage.ID, err)
-						break
-					}
-					for _, labelID := range msg.LabelIDs {
-						if _, created := createdSeqNums[labelID]; created {
-							// This message has been added to the label's mailbox
-							// No need to send a message update
-							continue
-						}
-
-						if mbox := u.getMailboxByLabel(labelID); mbox != nil {
-							seqNum, _, err := mbox.db.FromApiID(eventMessage.ID)
-							if err != nil {
-								log.Printf("cannot handle update event for message %s: cannot get message sequence number in %s: %v", eventMessage.ID, mbox.name, err)
-								continue
-							}
-
-							update := new(imapbackend.MessageUpdate)
-							update.Update = imapbackend.NewUpdate(u.u.Name, mbox.name)
-							update.Message = imap.NewMessage(seqNum, []imap.FetchItem{imap.FetchFlags})
-							update.Message.Flags = mbox.fetchFlags(msg)
-							eventUpdates = append(eventUpdates, update)
-						}
-					}
+					//		createdSeqNums, deletedSeqNums, err := u.db.UpdateMessage(eventMessage.ID, eventMessage.Updated)
+					//		if err != nil {
+					//			log.Printf("cannot handle update event for message %s: cannot update message in local DB: %v", eventMessage.ID, err)
+					//			break
+					//		}
+					//
+					//		for labelID, seqNum := range createdSeqNums {
+					//			if mbox := u.getMailboxByLabel(labelID); mbox != nil {
+					//				update := new(imapbackend.MailboxUpdate)
+					//				update.Update = imapbackend.NewUpdate(u.u.Name, mbox.name)
+					//				update.MailboxStatus = imap.NewMailboxStatus(mbox.name, []imap.StatusItem{imap.StatusMessages})
+					//				update.MailboxStatus.Messages = seqNum
+					//				eventUpdates = append(eventUpdates, update)
+					//			}
+					//		}
+					//		for labelID, seqNum := range deletedSeqNums {
+					//			if mbox := u.getMailboxByLabel(labelID); mbox != nil {
+					//				update := new(imapbackend.ExpungeUpdate)
+					//				update.Update = imapbackend.NewUpdate(u.u.Name, mbox.name)
+					//				update.SeqNum = seqNum
+					//				eventUpdates = append(eventUpdates, update)
+					//			}
+					//		}
+					//
+					//		// Send message updates
+					//		msg, err := u.db.Message(eventMessage.ID)
+					//		if err != nil {
+					//			log.Printf("cannot handle update event for message %s: cannot get updated message from local DB: %v", eventMessage.ID, err)
+					//			break
+					//		}
+					//		for _, labelID := range msg.LabelIDs {
+					//			if _, created := createdSeqNums[labelID]; created {
+					//				// This message has been added to the label's mailbox
+					//				// No need to send a message update
+					//				continue
+					//			}
+					//
+					//			if mbox := u.getMailboxByLabel(labelID); mbox != nil {
+					//				seqNum, _, err := mbox.db.FromApiID(eventMessage.ID)
+					//				if err != nil {
+					//					log.Printf("cannot handle update event for message %s: cannot get message sequence number in %s: %v", eventMessage.ID, mbox.name, err)
+					//					continue
+					//				}
+					//
+					//				update := new(imapbackend.MessageUpdate)
+					//				update.Update = imapbackend.NewUpdate(u.u.Name, mbox.name)
+					//				update.Message = imap.NewMessage(seqNum, []imap.FetchItem{imap.FetchFlags})
+					//				update.Message.Flags = mbox.fetchFlags(msg)
+					//				eventUpdates = append(eventUpdates, update)
+					//			}
+					//		}
 				case protonmail.EventDelete:
 					log.Println("Received delete event for message", eventMessage.ID)
-					seqNums, err := u.db.DeleteMessage(eventMessage.ID)
-					if err != nil {
-						log.Printf("cannot handle delete event for message %s: cannot delete message from local DB: %v", eventMessage.ID, err)
-						break
-					}
-
-					for labelID, seqNum := range seqNums {
-						if mbox := u.getMailboxByLabel(labelID); mbox != nil {
-							update := new(imapbackend.ExpungeUpdate)
-							update.Update = imapbackend.NewUpdate(u.u.Name, mbox.name)
-							update.SeqNum = seqNum
-							eventUpdates = append(eventUpdates, update)
-						}
-					}
+					//		seqNums, err := u.db.DeleteMessage(eventMessage.ID)
+					//		if err != nil {
+					//			log.Printf("cannot handle delete event for message %s: cannot delete message from local DB: %v", eventMessage.ID, err)
+					//			break
+					//		}
+					//
+					//		for labelID, seqNum := range seqNums {
+					//			if mbox := u.getMailboxByLabel(labelID); mbox != nil {
+					//				update := new(imapbackend.ExpungeUpdate)
+					//				update.Update = imapbackend.NewUpdate(u.u.Name, mbox.name)
+					//				update.SeqNum = seqNum
+					//				eventUpdates = append(eventUpdates, update)
+					//			}
+					//		}
 				}
 			}
 
