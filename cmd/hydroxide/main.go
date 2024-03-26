@@ -18,15 +18,15 @@ import (
 	"github.com/emersion/go-smtp"
 	"golang.org/x/term"
 
-	"github.com/emersion/hydroxide/auth"
-	"github.com/emersion/hydroxide/carddav"
-	"github.com/emersion/hydroxide/config"
-	"github.com/emersion/hydroxide/events"
-	"github.com/emersion/hydroxide/exports"
-	imapbackend "github.com/emersion/hydroxide/imap"
-	"github.com/emersion/hydroxide/imports"
-	"github.com/emersion/hydroxide/protonmail"
-	smtpbackend "github.com/emersion/hydroxide/smtp"
+	"github.com/0ranki/hydroxide-push/auth"
+	"github.com/0ranki/hydroxide-push/carddav"
+	"github.com/0ranki/hydroxide-push/config"
+	"github.com/0ranki/hydroxide-push/events"
+	"github.com/0ranki/hydroxide-push/exports"
+	imapbackend "github.com/0ranki/hydroxide-push/imap"
+	"github.com/0ranki/hydroxide-push/imports"
+	"github.com/0ranki/hydroxide-push/protonmail"
+	smtpbackend "github.com/0ranki/hydroxide-push/smtp"
 )
 
 const (

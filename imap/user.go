@@ -1,17 +1,17 @@
 package imap
 
 import (
-	"github.com/emersion/hydroxide/ntfy"
+	"github.com/0ranki/hydroxide-push/ntfy"
 	"log"
 	"strings"
 	"sync"
 
+	"github.com/0ranki/hydroxide-push/events"
+	"github.com/0ranki/hydroxide-push/imap/database"
+	"github.com/0ranki/hydroxide-push/protonmail"
 	"github.com/ProtonMail/go-crypto/openpgp"
 	"github.com/emersion/go-imap"
 	imapbackend "github.com/emersion/go-imap/backend"
-	"github.com/emersion/hydroxide/events"
-	"github.com/emersion/hydroxide/imap/database"
-	"github.com/emersion/hydroxide/protonmail"
 )
 
 var systemMailboxes = []struct {
@@ -118,7 +118,7 @@ func newUser(be *backend, username string, c *protonmail.Client, privateKeys ope
 	go uu.receiveEvents(be.updates, ch)
 	uu.eventsReceiver = be.eventsManager.Register(c, u.Name, ch, done)
 
-	log.Printf("User %q logged in via IMAP", u.Name)
+	log.Printf("Logged in as user %q", u.Name)
 	return uu, nil
 }
 

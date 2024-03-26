@@ -15,7 +15,7 @@ import (
 	"github.com/emersion/go-message"
 	"github.com/emersion/go-message/mail"
 
-	"github.com/emersion/hydroxide/protonmail"
+	"github.com/0ranki/hydroxide-push/protonmail"
 )
 
 func messageID(msg *protonmail.Message) string {
