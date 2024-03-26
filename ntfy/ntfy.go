@@ -87,7 +87,9 @@ func Login(cfg *NtfyConfig, be backend.Backend) {
 		log.Println("login first using " + executable + " auth <protonmail username>")
 		log.Fatalln("then setup ntfy using " + executable + "setup-ntfy")
 	}
-	cfg.BridgePw = os.Getenv("HYDROXIDE_BRIDGE_PASSWORD")
+	if cfg.BridgePw == "" {
+		cfg.BridgePw = os.Getenv("HYDROXIDE_BRIDGE_PASSWORD")
+	}
 	if cfg.BridgePw == "" {
 		scanner := bufio.NewScanner(os.Stdin)
 		fmt.Printf("Bridge password: ")

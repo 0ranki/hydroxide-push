@@ -229,20 +229,30 @@ func main() {
 		}
 
 	case "setup-ntfy":
+		err = cfg.Read()
+		if err != nil {
+			fmt.Println(err)
+		}
+		var new string
+		if cfg.URL != "" && cfg.Topic != "" {
+			fmt.Printf("Current push endpoint: %s\n", cfg.String())
+			new = "new "
+		}
 		scanner := bufio.NewScanner(os.Stdin)
-		fmt.Printf("Input push server URL (e.g. 'http://ntfy.sh') : ")
+		fmt.Printf("Input %spush server URL (e.g. 'http://ntfy.sh') : ", new)
 		scanner.Scan()
 		cfg.URL = scanner.Text()
 		scanner = bufio.NewScanner(os.Stdin)
-		fmt.Printf("Input push topic (e.g. my-proton-notifications)\nLeave blank to generate a random one: ")
+		fmt.Printf("Input push topic (e.g. my-proton-notifications): ")
 		scanner.Scan()
 		cfg.Topic = scanner.Text()
 		fmt.Printf("Using URL %s\n", cfg.String())
 		err = cfg.Save()
 		if err != nil {
-			log.Fatal(err)
+			fmt.Println(err)
+			os.Exit(1)
 		}
-		log.Println("Notification configuration saved")
+		fmt.Println("Notification configuration saved")
 	case "notify":
 		authManager := auth.NewManager(newClient)
 		eventsManager := events.NewManager()
