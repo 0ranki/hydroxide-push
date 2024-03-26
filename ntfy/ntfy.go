@@ -3,6 +3,7 @@ package ntfy
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/0ranki/hydroxide-push/auth"
 	"github.com/0ranki/hydroxide-push/config"
@@ -63,6 +64,34 @@ func (cfg *NtfyConfig) Read() error {
 	return nil
 }
 
+func AskToSaveBridgePw(cfg *NtfyConfig) (string, error) {
+	scanner := bufio.NewScanner(os.Stdin)
+	//fmt.Printf("Save bridge password to config?\nThe password is stored in plain text, but  (yes/n): ")
+	//scanner.Scan()
+	//if scanner.Text() == "yes" {
+	if err := cfg.Save(); err != nil {
+		return "", errors.New("failed to save notification config")
+	}
+	//}
+	return scanner.Text(), nil
+}
+
+func LoginBridge(cfg *NtfyConfig) error {
+	if cfg.BridgePw == "" {
+		cfg.BridgePw = os.Getenv("HYDROXIDE_BRIDGE_PASSWORD")
+	}
+	if cfg.BridgePw == "" {
+		scanner := bufio.NewScanner(os.Stdin)
+		fmt.Printf("Bridge password: ")
+		scanner.Scan()
+		cfg.BridgePw = scanner.Text()
+		_, err := AskToSaveBridgePw(cfg)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 func Login(cfg *NtfyConfig, be backend.Backend) {
 	//time.Sleep(1 * time.Second)
 	c, _ := net.ResolveIPAddr("ip", "127.0.0.1")
@@ -88,20 +117,9 @@ func Login(cfg *NtfyConfig, be backend.Backend) {
 		log.Fatalln("then setup ntfy using " + executable + "setup-ntfy")
 	}
 	if cfg.BridgePw == "" {
-		cfg.BridgePw = os.Getenv("HYDROXIDE_BRIDGE_PASSWORD")
-	}
-	if cfg.BridgePw == "" {
-		scanner := bufio.NewScanner(os.Stdin)
-		fmt.Printf("Bridge password: ")
-		scanner.Scan()
-		cfg.BridgePw = scanner.Text()
-		scanner = bufio.NewScanner(os.Stdin)
-		fmt.Printf("Save password to config? The password is stored in plain text! (yes/n): ")
-		scanner.Scan()
-		if scanner.Text() == "yes" {
-			if err = cfg.Save(); err != nil {
-				log.Fatal("failed to save notification config")
-			}
+		err = LoginBridge(cfg)
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
 	_, err = be.Login(&conn, usernames[0], cfg.BridgePw)

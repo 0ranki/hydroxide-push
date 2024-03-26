@@ -74,6 +74,38 @@ func listenEventsAndNotify(addr string, debug bool, authManager *auth.Manager, e
 	return nil
 }
 
+func setupNtfy() {
+	err := cfg.Read()
+	if err != nil {
+		fmt.Println(err)
+	}
+	var n string
+	if cfg.URL != "" && cfg.Topic != "" {
+		fmt.Printf("Current push endpoint: %s\n", cfg.String())
+		n = "new "
+	}
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Printf("Input %spush server URL (e.g. 'http://ntfy.sh') : ", n)
+	scanner.Scan()
+	cfg.URL = scanner.Text()
+	scanner = bufio.NewScanner(os.Stdin)
+	fmt.Printf("Input push topic (e.g. my-proton-notifications): ")
+	scanner.Scan()
+	cfg.Topic = scanner.Text()
+	fmt.Printf("Using URL %s\n", cfg.String())
+	err = cfg.Save()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	err = ntfy.LoginBridge(&cfg)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println("Notification configuration saved")
+}
+
 const usage = `usage: hydroxide-push [options...] <command>
 Commands:
 	auth <username>		Login to ProtonMail via hydroxide
@@ -211,8 +243,15 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-
-		fmt.Println("Bridge password:", bridgePassword)
+		cfg.BridgePw = bridgePassword
+		reply, err := ntfy.AskToSaveBridgePw(&cfg)
+		if err != nil {
+			log.Fatal(err)
+		}
+		if reply != "yes" {
+			fmt.Println("Bridge password:", bridgePassword)
+		}
+		setupNtfy()
 	case "status":
 		usernames, err := auth.ListUsernames()
 		if err != nil {
@@ -229,30 +268,7 @@ func main() {
 		}
 
 	case "setup-ntfy":
-		err = cfg.Read()
-		if err != nil {
-			fmt.Println(err)
-		}
-		var new string
-		if cfg.URL != "" && cfg.Topic != "" {
-			fmt.Printf("Current push endpoint: %s\n", cfg.String())
-			new = "new "
-		}
-		scanner := bufio.NewScanner(os.Stdin)
-		fmt.Printf("Input %spush server URL (e.g. 'http://ntfy.sh') : ", new)
-		scanner.Scan()
-		cfg.URL = scanner.Text()
-		scanner = bufio.NewScanner(os.Stdin)
-		fmt.Printf("Input push topic (e.g. my-proton-notifications): ")
-		scanner.Scan()
-		cfg.Topic = scanner.Text()
-		fmt.Printf("Using URL %s\n", cfg.String())
-		err = cfg.Save()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		fmt.Println("Notification configuration saved")
+		setupNtfy()
 	case "notify":
 		authManager := auth.NewManager(newClient)
 		eventsManager := events.NewManager()
