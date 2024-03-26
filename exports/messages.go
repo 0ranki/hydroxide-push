@@ -12,7 +12,7 @@ import (
 	"github.com/emersion/go-message/mail"
 	"github.com/emersion/go-message/textproto"
 
-	"github.com/emersion/hydroxide/protonmail"
+	"github.com/0ranki/hydroxide-push/protonmail"
 )
 
 func writeMessage(c *protonmail.Client, privateKeys openpgp.KeyRing, w io.Writer, msg *protonmail.Message) error {

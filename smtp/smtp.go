@@ -14,8 +14,8 @@ import (
 	"github.com/emersion/go-sasl"
 	"github.com/emersion/go-smtp"
 
-	"github.com/emersion/hydroxide/auth"
-	"github.com/emersion/hydroxide/protonmail"
+	"github.com/0ranki/hydroxide-push/auth"
+	"github.com/0ranki/hydroxide-push/protonmail"
 )
 
 func toPMAddressList(addresses []*mail.Address) []*protonmail.MessageAddress {
