@@ -33,7 +33,7 @@ to `$HOME/.config/notify.json`. Unlike upstream `hydroxide`, there is no service
 all communications is internal to the program.
 
 ### Reconfigure push server
-Binary:
+Binary:git.oranki.net/jarno/hydroxide-push:latest
 ```shell
 hydroxide-push setup-ntfy
 ```
