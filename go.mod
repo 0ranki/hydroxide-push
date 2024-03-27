@@ -1,20 +1,25 @@
 module github.com/0ranki/hydroxide-push
 
-go 1.13
+go 1.22
 
 require (
-	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c
+	github.com/ProtonMail/go-crypto v1.0.0
 	github.com/boltdb/bolt v1.3.1
-	github.com/cloudflare/circl v1.3.6 // indirect
 	github.com/emersion/go-bcrypt v0.0.0-20170822072041-6e724a1baa63
 	github.com/emersion/go-imap v1.2.1
 	github.com/emersion/go-mbox v1.0.3
-	github.com/emersion/go-message v0.17.0
-	github.com/emersion/go-sasl v0.0.0-20231106173351-e73c9f7bad43 // indirect
+	github.com/emersion/go-message v0.18.0
 	github.com/emersion/go-smtp v0.19.0
 	github.com/emersion/go-vcard v0.0.0-20230815062825-8fda7d206ec9
 	github.com/emersion/go-webdav v0.3.2-0.20220524091811-5d845721d8f7
-	github.com/emersion/hydroxide v0.2.28
-	golang.org/x/crypto v0.15.0
-	golang.org/x/term v0.14.0
+	golang.org/x/crypto v0.21.0
+	golang.org/x/term v0.18.0
+)
+
+require (
+	github.com/cloudflare/circl v1.3.7 // indirect
+	github.com/emersion/go-sasl v0.0.0-20231106173351-e73c9f7bad43 // indirect
+	github.com/emersion/go-textwrapper v0.0.0-20200911093747-65d896831594 // indirect
+	golang.org/x/sys v0.18.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 )
