@@ -33,7 +33,7 @@ to `$HOME/.config/notify.json`. Unlike upstream `hydroxide`, there is no service
 all communications is internal to the program.
 
 ### Reconfigure push server
-Binary:git.oranki.net/jarno/hydroxide-push:latest
+Binary:
 ```shell
 hydroxide-push setup-ntfy
 ```
@@ -46,6 +46,15 @@ be combined to a single string in future versions.
 
 **NOTE:** Authentication for the push endpoint is not yet supported.
 
-## License
+### Start the service
 
+## License
+Binary:
+```shell
+hydroxide-push notify
+```
+Container:
+```shell
+podman run -it --rm -v hydroxide-config:/data ghcr.io/0ranki/hydroxide-push
+```
 MIT
