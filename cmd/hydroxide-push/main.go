@@ -5,6 +5,10 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"log"
+	"os"
+	"time"
+
 	"github.com/0ranki/hydroxide-push/auth"
 	"github.com/0ranki/hydroxide-push/config"
 	"github.com/0ranki/hydroxide-push/events"
@@ -13,9 +17,6 @@ import (
 	"github.com/0ranki/hydroxide-push/protonmail"
 	imapserver "github.com/emersion/go-imap/server"
 	"golang.org/x/term"
-	"log"
-	"os"
-	"time"
 )
 
 const (
@@ -57,7 +58,7 @@ func askPass(prompt string) ([]byte, error) {
 	return b, err
 }
 
-func listenEventsAndNotify(addr string, debug bool, authManager *auth.Manager, eventsManager *events.Manager, tlsConfig *tls.Config) error {
+func listenEventsAndNotify(addr string, debug bool, authManager *auth.Manager, eventsManager *events.Manager, tlsConfig *tls.Config) {
 	be := imapbackend.New(authManager, eventsManager)
 	s := imapserver.New(be)
 	s.Addr = addr
@@ -71,39 +72,6 @@ func listenEventsAndNotify(addr string, debug bool, authManager *auth.Manager, e
 	for {
 		time.Sleep(10 * time.Second)
 	}
-	return nil
-}
-
-func setupNtfy() {
-	err := cfg.Read()
-	if err != nil {
-		fmt.Println(err)
-	}
-	var n string
-	if cfg.URL != "" && cfg.Topic != "" {
-		fmt.Printf("Current push endpoint: %s\n", cfg.String())
-		n = "new "
-	}
-	scanner := bufio.NewScanner(os.Stdin)
-	fmt.Printf("Input %spush server URL (e.g. 'http://ntfy.sh') : ", n)
-	scanner.Scan()
-	cfg.URL = scanner.Text()
-	scanner = bufio.NewScanner(os.Stdin)
-	fmt.Printf("Input push topic (e.g. my-proton-notifications): ")
-	scanner.Scan()
-	cfg.Topic = scanner.Text()
-	fmt.Printf("Using URL %s\n", cfg.String())
-	err = cfg.Save()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	err = ntfy.LoginBridge(&cfg)
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	fmt.Println("Notification configuration saved")
 }
 
 const usage = `usage: hydroxide-push [options...] <command>
@@ -144,6 +112,11 @@ func main() {
 	tlsConfig, err := config.TLS(*tlsCert, *tlsCertKey, *tlsClientCA)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	err = cfg.Read()
+	if err != nil {
+		fmt.Println(err)
 	}
 
 	cmd := flag.Arg(0)
@@ -244,14 +217,7 @@ func main() {
 			log.Fatal(err)
 		}
 		cfg.BridgePw = bridgePassword
-		reply, err := ntfy.AskToSaveBridgePw(&cfg)
-		if err != nil {
-			log.Fatal(err)
-		}
-		if reply != "yes" {
-			fmt.Println("Bridge password:", bridgePassword)
-		}
-		setupNtfy()
+		cfg.Setup()
 	case "status":
 		usernames, err := auth.ListUsernames()
 		if err != nil {
@@ -268,11 +234,11 @@ func main() {
 		}
 
 	case "setup-ntfy":
-		setupNtfy()
+		cfg.Setup()
 	case "notify":
 		authManager := auth.NewManager(newClient)
 		eventsManager := events.NewManager()
-		log.Fatal(listenEventsAndNotify("0", debug, authManager, eventsManager, tlsConfig))
+		listenEventsAndNotify("0", debug, authManager, eventsManager, tlsConfig)
 
 	default:
 		fmt.Print(usage)
