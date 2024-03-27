@@ -2,12 +2,14 @@ package ntfy
 
 import (
 	"bufio"
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 
@@ -23,7 +25,22 @@ type NtfyConfig struct {
 	BridgePw string `json:"bridgePw"`
 }
 
-func (cfg *NtfyConfig) String() string {
+func (cfg *NtfyConfig) Init() {
+	if cfg.Topic == "" {
+		r := make([]byte, 12)
+		_, err := rand.Read(r)
+		if err != nil {
+			log.Fatal(err)
+		}
+		cfg.Topic = strings.Replace(base64.StdEncoding.EncodeToString(r), "/", "+", -1)
+
+	}
+	if cfg.URL == "" {
+		cfg.URL = "http://ntfy.sh"
+	}
+}
+
+func (cfg *NtfyConfig) URI() string {
 	return fmt.Sprintf("%s/%s", cfg.URL, cfg.Topic)
 }
 
@@ -49,37 +66,36 @@ func Notify() {
 		log.Printf("error reading notification: %v", err)
 		return
 	}
-	req, _ := http.NewRequest("POST", cfg.String(), strings.NewReader("New message received"))
+	req, _ := http.NewRequest("POST", cfg.URI(), strings.NewReader("New message received"))
 	req.Header.Set("Title", "ProtoMail")
 	req.Header.Set("Click", "dismiss")
 	req.Header.Set("Tags", "envelope")
-	http.DefaultClient.Do(req)
+	if _, err := http.DefaultClient.Do(req); err != nil {
+		log.Printf("failed to publish to push topic: %v", err)
+		return
+	}
+	log.Printf("Push event sent")
+
 }
 
+// Read reads the configuration from file. Creates the file
+// if it does not exist
 func (cfg *NtfyConfig) Read() error {
 	f, err := ntfyConfigFile()
 	if err == nil {
 		b, err := os.ReadFile(f)
 		if err == nil {
 			err = json.Unmarshal(b, &cfg)
+		} else if strings.HasSuffix(err.Error(), "no such file or directory") {
+			cfg.Init()
+			err = cfg.Save()
 		}
 		if err != nil {
-			return err
+			log.Fatal(err)
 		}
+		cfg.Init()
 	}
 	return nil
-}
-
-func AskToSaveBridgePw(cfg *NtfyConfig) (string, error) {
-	scanner := bufio.NewScanner(os.Stdin)
-	//fmt.Printf("Save bridge password to config?\nThe password is stored in plain text, but  (yes/n): ")
-	//scanner.Scan()
-	//if scanner.Text() == "yes" {
-	if err := cfg.Save(); err != nil {
-		return "", errors.New("failed to save notification config")
-	}
-	//}
-	return scanner.Text(), nil
 }
 
 func LoginBridge(cfg *NtfyConfig) error {
@@ -91,10 +107,7 @@ func LoginBridge(cfg *NtfyConfig) error {
 		fmt.Printf("Bridge password: ")
 		scanner.Scan()
 		cfg.BridgePw = scanner.Text()
-		_, err := AskToSaveBridgePw(cfg)
-		if err != nil {
-			return err
-		}
+
 	}
 	return nil
 }
@@ -132,4 +145,54 @@ func Login(cfg *NtfyConfig, be backend.Backend) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func (cfg *NtfyConfig) Setup() {
+	var n string
+	if cfg.URL != "" && cfg.Topic != "" {
+		fmt.Printf("Current push endpoint: %s\n", cfg.URI())
+		n = "new "
+	}
+	// Read push base URL
+	notValid := true
+	scanner := bufio.NewScanner(os.Stdin)
+	for notValid {
+		tmpURL := cfg.URL
+		fmt.Printf("Input %spush server URL ('%s') : ", n, cfg.URL)
+		scanner.Scan()
+		if len(scanner.Text()) > 0 {
+			tmpURL = scanner.Text()
+		}
+		if _, err := url.ParseRequestURI(tmpURL); err != nil {
+			fmt.Printf("Not a valid URL: %s\n", tmpURL)
+		} else {
+			notValid = false
+			cfg.URL = tmpURL
+		}
+	}
+	scanner = bufio.NewScanner(os.Stdin)
+	// Read push topic
+	fmt.Printf("Input push topic ('%s'): ", cfg.Topic)
+	scanner.Scan()
+	if len(scanner.Text()) > 0 {
+		cfg.Topic = scanner.Text()
+	}
+	fmt.Printf("Using URL %s\n", cfg.URI())
+	// Save bridge password
+	if len(cfg.BridgePw) == 0 {
+		err := LoginBridge(cfg)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	} else {
+		fmt.Println("Bridge password is set")
+	}
+	// Save configuration
+	err := cfg.Save()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	fmt.Println("Notification configuration saved")
 }
