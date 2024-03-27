@@ -5,15 +5,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/0ranki/hydroxide-push/auth"
-	"github.com/0ranki/hydroxide-push/config"
-	"github.com/emersion/go-imap"
-	"github.com/emersion/go-imap/backend"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/0ranki/hydroxide-push/auth"
+	"github.com/0ranki/hydroxide-push/config"
+	"github.com/emersion/go-imap"
+	"github.com/emersion/go-imap/backend"
 )
 
 type NtfyConfig struct {
@@ -43,7 +44,12 @@ func ntfyConfigFile() (string, error) {
 }
 
 func Notify() {
-	req, _ := http.NewRequest("POST", "https://push.oranki.net/testing20240325", strings.NewReader("New message received"))
+	cfg := NtfyConfig{}
+	if err := cfg.Read(); err != nil {
+		log.Printf("error reading notification: %v", err)
+		return
+	}
+	req, _ := http.NewRequest("POST", cfg.String(), strings.NewReader("New message received"))
 	req.Header.Set("Title", "ProtoMail")
 	req.Header.Set("Click", "dismiss")
 	req.Header.Set("Tags", "envelope")
