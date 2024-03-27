@@ -1,6 +1,6 @@
-module github.com/emersion/hydroxide
+module github.com/0ranki/hydroxide-push
 
-go 1.17
+go 1.22
 
 require (
 	github.com/ProtonMail/go-crypto v1.0.0
