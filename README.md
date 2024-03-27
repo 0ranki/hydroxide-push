@@ -62,7 +62,7 @@ A Podman kube YAML file is provided in the repo.
 
 > **Note:** If you're using 2FA or just don't want to put your password to a file, use the manual method above. Make sure the volume name (claimName) in the YAML mathces what you use in the commands. 
 
-- Download/copy `hydroxide-push-podman.yaml` to the machine you intend to run the daemon on
+- Download/copy `hydroxide-push-podman.yaml` to an empty directory on the machine you intend to run the daemon on
 - Edit the config values at the top of the file
 - Start the pod:
     ```shell
@@ -71,7 +71,7 @@ A Podman kube YAML file is provided in the repo.
     - Latest container image is pulled
     - A named volume (`hydroxide-push`) will be created for the configuration
     - Login to Proton and push URL configuration is handled automatically, after which the daemon starts
-- After the initial setup, the ConfigMap (before `---`) can be removed from the YAML.). Optionally to clear the environment variables, run
+- After the initial setup, the ConfigMap (before `---`) can be removed from the YAML. Optionally to clear the environment variables, run
 
     ```shell
     podman kube play ./hydroxide-push-podman.yaml --replace
