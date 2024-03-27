@@ -74,11 +74,117 @@ func listenEventsAndNotify(addr string, debug bool, authManager *auth.Manager, e
 	}
 }
 
+func authenticate(authCmd *flag.FlagSet) {
+	var username string
+	if os.Getenv("PROTON_ACCT") != "" {
+		username = os.Getenv("PROTON_ACCT")
+	} else {
+		username = authCmd.Arg(0)
+	}
+	if username == "" {
+		log.Fatal("usage: hydroxide auth <username>")
+	}
+
+	c := newClient()
+
+	var a *protonmail.Auth
+	/*if cachedAuth, ok := auths[username]; ok {
+		var err error
+		a, err = c.AuthRefresh(a)
+		if err != nil {
+			// TODO: handle expired token error
+			log.Fatal(err)
+		}
+	}*/
+
+	var loginPassword string
+	if a == nil {
+		if os.Getenv("PROTON_ACCT_PASSWORD") != "" {
+			loginPassword = os.Getenv("PROTON_ACCT_PASSWORD")
+		} else if pass, err := askPass("Password"); err != nil {
+			log.Fatal(err)
+		} else {
+			loginPassword = string(pass)
+		}
+
+		authInfo, err := c.AuthInfo(username)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		a, err = c.Auth(username, loginPassword, authInfo)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if a.TwoFactor.Enabled != 0 {
+			if a.TwoFactor.TOTP != 1 {
+				log.Fatal("Only TOTP is supported as a 2FA method")
+			}
+
+			scanner := bufio.NewScanner(os.Stdin)
+			fmt.Printf("2FA TOTP code: ")
+			scanner.Scan()
+			code := scanner.Text()
+
+			scope, err := c.AuthTOTP(code)
+			if err != nil {
+				log.Fatal(err)
+			}
+			a.Scope = scope
+		}
+	}
+
+	var mailboxPassword string
+	if a.PasswordMode == protonmail.PasswordSingle {
+		mailboxPassword = loginPassword
+	}
+	if mailboxPassword == "" {
+		prompt := "Password"
+		if a.PasswordMode == protonmail.PasswordTwo {
+			prompt = "Mailbox password"
+		}
+		if pass, err := askPass(prompt); err != nil {
+			log.Fatal(err)
+		} else {
+			mailboxPassword = string(pass)
+		}
+	}
+
+	keySalts, err := c.ListKeySalts()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	_, err = c.Unlock(a, keySalts, mailboxPassword)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	secretKey, bridgePassword, err := auth.GeneratePassword()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = auth.EncryptAndSave(&auth.CachedAuth{
+		Auth:            *a,
+		LoginPassword:   loginPassword,
+		MailboxPassword: mailboxPassword,
+		KeySalts:        keySalts,
+	}, username, secretKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+	cfg.BridgePw = bridgePassword
+	cfg.Setup()
+}
+
 const usage = `usage: hydroxide-push [options...] <command>
 Commands:
 	auth <username>		Login to ProtonMail via hydroxide
 	status				View hydroxide status
 	notify				Start the notification daemon
+	setup-ntfy          (Re)configure the push endpoint
 
 Global options:
 	-debug
@@ -123,101 +229,8 @@ func main() {
 	switch cmd {
 	case "auth":
 		authCmd.Parse(flag.Args()[1:])
-		username := authCmd.Arg(0)
-		if username == "" {
-			log.Fatal("usage: hydroxide auth <username>")
-		}
+		authenticate(authCmd)
 
-		c := newClient()
-
-		var a *protonmail.Auth
-		/*if cachedAuth, ok := auths[username]; ok {
-			var err error
-			a, err = c.AuthRefresh(a)
-			if err != nil {
-				// TODO: handle expired token error
-				log.Fatal(err)
-			}
-		}*/
-
-		var loginPassword string
-		if a == nil {
-			if pass, err := askPass("Password"); err != nil {
-				log.Fatal(err)
-			} else {
-				loginPassword = string(pass)
-			}
-
-			authInfo, err := c.AuthInfo(username)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			a, err = c.Auth(username, loginPassword, authInfo)
-			if err != nil {
-				log.Fatal(err)
-			}
-
-			if a.TwoFactor.Enabled != 0 {
-				if a.TwoFactor.TOTP != 1 {
-					log.Fatal("Only TOTP is supported as a 2FA method")
-				}
-
-				scanner := bufio.NewScanner(os.Stdin)
-				fmt.Printf("2FA TOTP code: ")
-				scanner.Scan()
-				code := scanner.Text()
-
-				scope, err := c.AuthTOTP(code)
-				if err != nil {
-					log.Fatal(err)
-				}
-				a.Scope = scope
-			}
-		}
-
-		var mailboxPassword string
-		if a.PasswordMode == protonmail.PasswordSingle {
-			mailboxPassword = loginPassword
-		}
-		if mailboxPassword == "" {
-			prompt := "Password"
-			if a.PasswordMode == protonmail.PasswordTwo {
-				prompt = "Mailbox password"
-			}
-			if pass, err := askPass(prompt); err != nil {
-				log.Fatal(err)
-			} else {
-				mailboxPassword = string(pass)
-			}
-		}
-
-		keySalts, err := c.ListKeySalts()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		_, err = c.Unlock(a, keySalts, mailboxPassword)
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		secretKey, bridgePassword, err := auth.GeneratePassword()
-		if err != nil {
-			log.Fatal(err)
-		}
-
-		err = auth.EncryptAndSave(&auth.CachedAuth{
-			Auth:            *a,
-			LoginPassword:   loginPassword,
-			MailboxPassword: mailboxPassword,
-			KeySalts:        keySalts,
-		}, username, secretKey)
-		if err != nil {
-			log.Fatal(err)
-		}
-		cfg.BridgePw = bridgePassword
-		cfg.Setup()
 	case "status":
 		usernames, err := auth.ListUsernames()
 		if err != nil {
@@ -235,7 +248,15 @@ func main() {
 
 	case "setup-ntfy":
 		cfg.Setup()
+
 	case "notify":
+		if os.Getenv("PROTON_ACCT_PASSWORD") != "" && os.Getenv("PROTON_ACCT") != "" && os.Getenv("PUSH_URL") != "" && os.Getenv("PUSH_TOPIC") != "" && cfg.BridgePw == "" {
+			log.Println("Logging in to Proton account using values from environment")
+			cfg.URL = os.Getenv("PUSH_URL")
+			cfg.Topic = os.Getenv("PUSH_TOPIC")
+			cfg.Save()
+			authenticate(new(flag.FlagSet))
+		}
 		authManager := auth.NewManager(newClient)
 		eventsManager := events.NewManager()
 		listenEventsAndNotify("0", debug, authManager, eventsManager, tlsConfig)

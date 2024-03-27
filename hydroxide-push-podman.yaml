@@ -1,0 +1,37 @@
+## Remove this ConfigMap section after the initial run
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: hydroxide-push-config
+data:
+    PROTON_ACCT: "my.account@protonmail.com"
+    PROTON_ACCT_PASSWORD: "myprotonaccountpassword"
+    PUSH_URL: "http://ntfy.sh"
+    PUSH_TOPIC: ""
+## Remove the above after first run
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: "2024-03-27T07:02:59Z"
+  labels:
+    app: hydroxide-push
+  name: hydroxide-push
+spec:
+  containers:
+  - args:
+    - notify
+    image: ghcr.io/0ranki/hydroxide-push:latest
+    name: main
+    volumeMounts:
+    - mountPath: /data
+      name: hydroxide-push-pvc
+    envFrom:
+    - configMapRef:
+        name: hydroxide-push-config
+        optional: true
+  volumes:
+  - name: hydroxide-push-pvc
+    persistentVolumeClaim:
+      claimName: hydroxide-push
+

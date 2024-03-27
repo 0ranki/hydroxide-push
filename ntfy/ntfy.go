@@ -63,7 +63,7 @@ func ntfyConfigFile() (string, error) {
 func Notify() {
 	cfg := NtfyConfig{}
 	if err := cfg.Read(); err != nil {
-		log.Printf("error reading notification: %v", err)
+		log.Printf("error reading configuration: %v", err)
 		return
 	}
 	req, _ := http.NewRequest("POST", cfg.URI(), strings.NewReader("New message received"))
@@ -148,11 +148,25 @@ func Login(cfg *NtfyConfig, be backend.Backend) {
 }
 
 func (cfg *NtfyConfig) Setup() {
+
+	// Configure using environment
+	if os.Getenv("PUSH_URL") != "" && os.Getenv("PUSH_TOPIC") != "" {
+		cfg.URL = os.Getenv("PUSH_URL")
+		cfg.Topic = os.Getenv("PUSH_TOPIC")
+		log.Printf("Current push endpoint: %s\n", cfg.URI())
+		err := cfg.Save()
+		if err != nil {
+			log.Fatal(err)
+		}
+		return
+	}
+
 	var n string
 	if cfg.URL != "" && cfg.Topic != "" {
 		fmt.Printf("Current push endpoint: %s\n", cfg.URI())
 		n = "new "
 	}
+
 	// Read push base URL
 	notValid := true
 	scanner := bufio.NewScanner(os.Stdin)
