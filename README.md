@@ -48,7 +48,6 @@ be combined to a single string in future versions.
 
 ### Start the service
 
-## License
 Binary:
 ```shell
 hydroxide-push notify
@@ -57,4 +56,6 @@ Container:
 ```shell
 podman run -it --rm -v hydroxide-config:/data ghcr.io/0ranki/hydroxide-push
 ```
+
+## License
 MIT
