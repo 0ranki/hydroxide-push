@@ -1,7 +1,7 @@
 # hydroxide-push
 ### *Forked from [Hydroxide](https://github.com/emersion/hydroxide)*
 
-## Push notifications for Proton Mail mobile via a UP provider
+## Push notifications for Proton Mail mobile via a UP provider [![.github/workflows/build.yaml](https://github.com/0ranki/hydroxide-push/actions/workflows/build.yaml/badge.svg)](https://github.com/0ranki/hydroxide-push/actions/workflows/build.yaml)
 
 Protonmail depends on Google services to deliver push notifications,
 This is a stripped down version of [Hydroxide](https://github.com/emersion/hydroxide)
