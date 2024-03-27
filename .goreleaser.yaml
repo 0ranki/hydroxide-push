@@ -4,7 +4,8 @@ before:
   hooks:
 
 builds:
-  - env:
+  - main: ./cmd/hydroxide-push
+    env:
       - CGO_ENABLED=0
     goos:
       - linux
