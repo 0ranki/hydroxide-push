@@ -9,8 +9,8 @@ to get notified of new mail. See original repo for details on operation.
 
 ## Setup
 
-Download (soon), build the binary or the container image or pull the container image yourself.
-Simplest way is to run the container image.
+Download or build the binary, pull the pre-built container image or build the image yourself.
+Simplest way is to run the pre-built container image.
 
 Login and push gateway details are saved under `$HOME/.config/hydroxide`. The container
 image saves configuration under `/data`, so mount a named volume or host directory there.

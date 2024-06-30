@@ -67,7 +67,7 @@ func Notify() {
 		return
 	}
 	req, _ := http.NewRequest("POST", cfg.URI(), strings.NewReader("New message received"))
-	req.Header.Set("Title", "ProtoMail")
+	req.Header.Set("Title", "ProtonMail")
 	req.Header.Set("Click", "dismiss")
 	req.Header.Set("Tags", "envelope")
 	if _, err := http.DefaultClient.Do(req); err != nil {
