@@ -11,6 +11,9 @@ to get notified of new mail. See original repo for details on operation.
 
 Should work with free accounts too.
 
+<sup><sub>This repo is used to build the binaries and container images with Github Actions.
+Mirrored from https://git.oranki.net/jarno/hydroxide-push</sub></sup>
+
 ## Setup
 
 Download or build the binary, pull the pre-built container image or build the image yourself.
