@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/crypto/ssh/terminal"
 	"log"
 	"net"
 	"net/http"
@@ -217,18 +218,24 @@ func (cfg *NtfyConfig) Setup() {
 	// existing values are reset
 	cfg.User = ""
 	cfg.Password = ""
+	fmt.Println("Configuring HTTP basic authentication for push endpoint.")
+	fmt.Println("Previously set username and password have been cleared.")
+	fmt.Println("Leave values blank to disable basic authentication.")
 	scanner = bufio.NewScanner(os.Stdin)
-	fmt.Printf("Input username for push endpoint: ")
+	fmt.Printf("Username: ")
 	scanner.Scan()
 	if len(scanner.Text()) > 0 {
 		cfg.User = scanner.Text()
 	}
-	scanner = bufio.NewScanner(os.Stdin)
-	fmt.Printf("Input password for push endpoint: ")
-	scanner.Scan()
-	if len(scanner.Text()) > 0 {
+	fmt.Printf("Password: ")
+	pwBytes, err := terminal.ReadPassword(0)
+	if err != nil {
+		fmt.Printf("Error reading password: %v\n", err)
+		return
+	}
+	if len(pwBytes) > 0 {
 		// Store the password in base64 for a little obfuscation
-		cfg.Password = base64.StdEncoding.EncodeToString(scanner.Bytes())
+		cfg.Password = base64.StdEncoding.EncodeToString(pwBytes)
 	}
 	// Save bridge password
 	if len(cfg.BridgePw) == 0 {
@@ -241,7 +248,7 @@ func (cfg *NtfyConfig) Setup() {
 		fmt.Println("Bridge password is set")
 	}
 	// Save configuration
-	err := cfg.Save()
+	err = cfg.Save()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
