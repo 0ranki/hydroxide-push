@@ -94,6 +94,30 @@ A Podman kube YAML file is provided in the repo.
     The command can also be used to pull the latest version and restart the pod.
 - To reauthenticate or clear data, simply remove the named volume or run the `auth` command
 
+## Updating
+
+Binary:
+- stop the service
+- download or build the new version, replace the of the old binary
+- restart the service
+
+Container:
+- pull latest image
+- restart container
+
+## Building locally
+Clone the repo, then `cd` to the repo root
+
+Binary:
+> Requires Go 1.22
+```shell
+CGO_ENABLED=0 go build -o $HOME/.local/bin/hydroxide-push ./cmd/hydroxide-push/
+```
+Container:
+```shell
+podman build -t localhost/hydroxide-push:latest .
+```
+
 
 ## License
 MIT
