@@ -39,11 +39,15 @@ Container:
 ```shell
 podman run -it --rm -v hydroxide-push:/data ghcr.io/0ranki/hydroxide-push setup-ntfy
 ```
-You'll be asked for the base URL of the push server, and the topic. The push endpoint configuration can be changed while the daemon is running.
+You'll be asked for the base URL of the push server, topic then username and password for HTTP basic authentication.
+The push endpoint configuration can be changed while the daemon is running.
+
+Username and password are stored in `notify.json`, the password is only Base64-encoded. You should create a dedicated user that
+has write-only access to the topic for the daemon.
+
+**Push topic username and password are cleared each time setup-ntfy is run, they need to be entered manually every time.**
 
 The currently configured values are shown inside braces. Leave input blank to use the current values.
-
->**NOTE:** Authentication for the push endpoint is not yet supported.
 
 ### Start the service
 
