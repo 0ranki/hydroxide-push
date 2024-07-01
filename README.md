@@ -3,9 +3,13 @@
 
 ## Push notifications for Proton Mail mobile via a UP provider [![.github/workflows/build.yaml](https://github.com/0ranki/hydroxide-push/actions/workflows/build.yaml/badge.svg)](https://github.com/0ranki/hydroxide-push/actions/workflows/build.yaml)
 
+![image](https://github.com/0ranki/hydroxide-push/assets/50285623/04959566-3d13-4be4-84bd-d7daad3a3166)
+
 Protonmail depends on Google services to deliver push notifications,
 This is a stripped down version of [Hydroxide](https://github.com/emersion/hydroxide)
 to get notified of new mail. See original repo for details on operation.
+
+Should work with free accounts too.
 
 ## Setup
 
