@@ -39,6 +39,10 @@ Container:
 ```shell
 podman run -it --rm -v hydroxide-push:/data ghcr.io/0ranki/hydroxide-push setup-ntfy
 ```
+Alternatively to run the command in an already running container (replace `name-of-container` with the name or id of the running container):
+```shell
+podman exec -it name-of-container /hydroxide-push setup-ntfy
+```
 You'll be asked for the base URL of the push server, topic then username and password for HTTP basic authentication.
 The push endpoint configuration can be changed while the daemon is running.
 
