@@ -23,6 +23,8 @@ type NtfyConfig struct {
 	URL      string `json:"url"`
 	Topic    string `json:"topic"`
 	BridgePw string `json:"bridgePw"`
+	User     string `json:"user"`
+	Password string `json:"password"`
 }
 
 func (cfg *NtfyConfig) Init() {
@@ -63,10 +65,18 @@ func ntfyConfigFile() (string, error) {
 func Notify() {
 	cfg := NtfyConfig{}
 	if err := cfg.Read(); err != nil {
-		log.Printf("error reading configuration: %v", err)
+		log.Printf("error reading configuration: %v\n", err)
 		return
 	}
 	req, _ := http.NewRequest("POST", cfg.URI(), strings.NewReader("New message received"))
+	if cfg.User != "" && cfg.Password != "" {
+		pw, err := base64.StdEncoding.DecodeString(cfg.Password)
+		if err != nil {
+			log.Printf("Error decoding push endpoint password: %v\n", err)
+			return
+		}
+		req.SetBasicAuth(cfg.User, string(pw))
+	}
 	req.Header.Set("Title", "ProtonMail")
 	req.Header.Set("Click", "dismiss")
 	req.Header.Set("Tags", "envelope")
@@ -154,6 +164,13 @@ func (cfg *NtfyConfig) Setup() {
 		cfg.URL = os.Getenv("PUSH_URL")
 		cfg.Topic = os.Getenv("PUSH_TOPIC")
 		log.Printf("Current push endpoint: %s\n", cfg.URI())
+		if os.Getenv("PUSH_USER") != "" && os.Getenv("PUSH_PASSWORD") != "" {
+			cfg.User = os.Getenv("PUSH_USER")
+			cfg.Password = base64.StdEncoding.EncodeToString([]byte(os.Getenv("PUSH_PASSWORD")))
+			log.Println("Authentication for push endpoint configured using environment")
+		} else {
+			log.Println("Both PUSH_USER and PUSH_PASSWORD not set, assuming no authentication is necessary.")
+		}
 		err := cfg.Save()
 		if err != nil {
 			log.Fatal(err)
@@ -165,6 +182,9 @@ func (cfg *NtfyConfig) Setup() {
 	if cfg.URL != "" && cfg.Topic != "" {
 		fmt.Printf("Current push endpoint: %s\n", cfg.URI())
 		n = "new "
+	}
+	if cfg.User != "" && cfg.Password != "" {
+		fmt.Println("Push is currently configured for basic auth. You'll need to input credentials again")
 	}
 
 	// Read push base URL
@@ -192,6 +212,24 @@ func (cfg *NtfyConfig) Setup() {
 		cfg.Topic = scanner.Text()
 	}
 	fmt.Printf("Using URL %s\n", cfg.URI())
+	// Configure HTTP Basic Auth for push
+	// This needs to be input each time the auth flow is done,
+	// existing values are reset
+	cfg.User = ""
+	cfg.Password = ""
+	scanner = bufio.NewScanner(os.Stdin)
+	fmt.Printf("Input username for push endpoint: ")
+	scanner.Scan()
+	if len(scanner.Text()) > 0 {
+		cfg.User = scanner.Text()
+	}
+	scanner = bufio.NewScanner(os.Stdin)
+	fmt.Printf("Input password for push endpoint: ")
+	scanner.Scan()
+	if len(scanner.Text()) > 0 {
+		// Store the password in base64 for a little obfuscation
+		cfg.Password = base64.StdEncoding.EncodeToString(scanner.Bytes())
+	}
 	// Save bridge password
 	if len(cfg.BridgePw) == 0 {
 		err := LoginBridge(cfg)
