@@ -1,9 +1,10 @@
 # hydroxide-push
 ### *Forked from [Hydroxide](https://github.com/emersion/hydroxide)*
+[![.github/workflows/build.yaml](https://github.com/0ranki/hydroxide-push/actions/workflows/build.yaml/badge.svg)](https://github.com/0ranki/hydroxide-push/actions/workflows/build.yaml) ![GitHub Release](https://img.shields.io/github/v/release/0ranki/hydroxide-push)
 
-## Push notifications for Proton Mail mobile via a UP provider [![.github/workflows/build.yaml](https://github.com/0ranki/hydroxide-push/actions/workflows/build.yaml/badge.svg)](https://github.com/0ranki/hydroxide-push/actions/workflows/build.yaml)
+<img src="https://github.com/0ranki/hydroxide-push/assets/50285623/04959566-3d13-4be4-84bd-d7daad3a3166" width="600">
 
-![image](https://github.com/0ranki/hydroxide-push/assets/50285623/04959566-3d13-4be4-84bd-d7daad3a3166)
+## Push notifications for Proton Mail mobile via a UP provider
 
 Protonmail depends on Google services to deliver push notifications,
 This is a stripped down version of [Hydroxide](https://github.com/emersion/hydroxide)
@@ -13,6 +14,9 @@ Should work with free accounts too.
 
 <sup><sub>This repo is used to build the binaries and container images with Github Actions.
 Mirrored from https://git.oranki.net/jarno/hydroxide-push</sub></sup>
+
+Pre-built releases and container images are available on [Github](https://github.com/0ranki/hydroxide-push).
+
 
 ## Setup
 
