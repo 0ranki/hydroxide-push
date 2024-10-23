@@ -64,15 +64,27 @@ has write-only access to the topic for the daemon.
 
 The currently configured values are shown inside braces. Leave input blank to use the current values.
 
+### Poll interval
+
+The interval between checking messages can be configured by setting the environment variable `POLL_INTERVAL`.
+The value is interpreted as the number of seconds. For example, setting `POLL_INTERVAL=60` will configure the
+service to check for new messages every 60 seconds.
+
+The default value is 10 seconds.
+
 ### Start the service
 
 Binary:
 ```shell
 hydroxide-push notify
+# or
+POLL_INTERVAL=30 hydroxide-push notify
 ```
 Container:
 ```shell
 podman run -it --rm -v hydroxide-push:/data ghcr.io/0ranki/hydroxide-push
+# or
+podman run -it --rm -e POLL_INTERVAL=30 -v hydroxide-push:/data ghcr.io/0ranki/hydroxide-push
 ```
 
 ## Podman pod
