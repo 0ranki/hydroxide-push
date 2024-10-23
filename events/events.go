@@ -22,7 +22,7 @@ type Receiver struct {
 
 func (r *Receiver) receiveEvents() {
 	interval := pollInterval
-	if os.Getenv("POLL_INTERVAL") {
+	if os.Getenv("POLL_INTERVAL") != "" {
 		var err error
 		interval, err = time.ParseDuration(os.Getenv("POLL_INTERVAL") + "s")
 		if err != nil {
