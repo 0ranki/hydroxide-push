@@ -2,6 +2,7 @@ package events
 
 import (
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -20,7 +21,18 @@ type Receiver struct {
 }
 
 func (r *Receiver) receiveEvents() {
-	t := time.NewTicker(pollInterval)
+	interval := pollInterval
+	if os.Getenv("POLL_INTERVAL") {
+		var err error
+		interval, err = time.ParseDuration(os.Getenv("POLL_INTERVAL") + "s")
+		if err != nil {
+			log.Printf("failed to parse POLL_INTERVAL: %v\n", err)
+			log.Println("falling back to default 10s interval")
+		} else {
+			log.Printf("poll interval set to %d seconds", int(interval.Seconds()))
+		}
+	}
+	t := time.NewTicker(interval)
 	defer t.Stop()
 
 	var last string
