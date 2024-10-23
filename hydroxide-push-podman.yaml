@@ -8,6 +8,8 @@ data:
     PROTON_ACCT_PASSWORD: "myprotonaccountpassword"
     PUSH_URL: "http://ntfy.sh"
     PUSH_TOPIC: ""
+    PUSH_USER: ""
+    PUSH_PASSWORD: ""
 ## Remove the above after first run
 ---
 apiVersion: v1
